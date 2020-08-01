@@ -2,13 +2,14 @@ package main
 
 import (
 	"flag"
+	codes "github.com/aidanstevens29/go-eccodes"
 	"io"
 	"log"
 	"runtime/debug"
 	"time"
 	"unsafe"
 
-	"errors"
+	"github.com/pkg/errors"
 )
 
 func main() {

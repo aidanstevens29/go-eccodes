@@ -1,8 +1,8 @@
 package codes
 
 import (
-	"errors"
 	"fmt"
+	"github.com/pkg/errors"
 	"math"
 	"runtime"
 

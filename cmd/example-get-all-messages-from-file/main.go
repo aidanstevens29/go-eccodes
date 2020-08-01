@@ -2,13 +2,14 @@ package main
 
 import (
 	"flag"
+	codes "github.com/aidanstevens29/go-eccodes"
 	"io"
 	"log"
 	"runtime/debug"
 	"time"
 
-	"errors"
 	"github.com/aidanstevens29/go-eccodes/native"
+	"github.com/pkg/errors"
 
 	cio "github.com/aidanstevens29/go-eccodes/io"
 )

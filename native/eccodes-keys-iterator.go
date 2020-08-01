@@ -7,7 +7,7 @@ import "C"
 import (
 	"unsafe"
 
-	"errors"
+	"github.com/pkg/errors"
 )
 
 const (

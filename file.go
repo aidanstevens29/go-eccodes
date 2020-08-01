@@ -4,7 +4,7 @@ import (
 	"io"
 	"runtime"
 
-	"errors"
+	"github.com/pkg/errors"
 
 	"github.com/aidanstevens29/go-eccodes/debug"
 	cio "github.com/aidanstevens29/go-eccodes/io"

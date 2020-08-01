@@ -7,7 +7,7 @@ import "C"
 import (
 	"unsafe"
 
-	"errors"
+	"github.com/pkg/errors"
 
 	"github.com/aidanstevens29/go-eccodes/debug"
 )
