@@ -4,11 +4,11 @@ import (
 	"io"
 	"runtime"
 
-	"github.com/amsokol/go-errors"
+	"errors"
 
-	"github.com/mtfelian/go-eccodes/debug"
-	cio "github.com/mtfelian/go-eccodes/io"
-	"github.com/mtfelian/go-eccodes/native"
+	"github.com/aidanstevens29/go-eccodes/debug"
+	cio "github.com/aidanstevens29/go-eccodes/io"
+	"github.com/aidanstevens29/go-eccodes/native"
 )
 
 type Reader interface{ Next() (Message, error) }

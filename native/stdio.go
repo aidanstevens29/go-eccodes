@@ -8,7 +8,7 @@ import "C"
 import (
 	"unsafe"
 
-	"github.com/amsokol/go-errors"
+	"errors"
 )
 
 func Cfopen(filename string, mode string) (CFILE, error) {

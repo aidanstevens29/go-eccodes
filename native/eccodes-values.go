@@ -7,9 +7,9 @@ import "C"
 import (
 	"unsafe"
 
-	"github.com/amsokol/go-errors"
+	"errors"
 
-	"github.com/mtfelian/go-eccodes/debug"
+	"github.com/aidanstevens29/go-eccodes/debug"
 )
 
 const MaxStringLength = 1030

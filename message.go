@@ -6,8 +6,8 @@ import (
 	"math"
 	"runtime"
 
-	"github.com/mtfelian/go-eccodes/debug"
-	"github.com/mtfelian/go-eccodes/native"
+	"github.com/aidanstevens29/go-eccodes/debug"
+	"github.com/aidanstevens29/go-eccodes/native"
 )
 
 // error codes

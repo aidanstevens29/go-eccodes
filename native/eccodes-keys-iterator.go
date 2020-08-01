@@ -7,7 +7,7 @@ import "C"
 import (
 	"unsafe"
 
-	"github.com/amsokol/go-errors"
+	"errors"
 )
 
 const (
