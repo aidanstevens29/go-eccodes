@@ -1,6 +1,6 @@
 module go-eccodes
 
-go 1.27
+go 1.26
 
 require (
 	github.com/onsi/ginkgo/v2 v2.32.1

@@ -21,21 +21,13 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v7.0.1
 
-      - name: Set up Go
-        uses: actions/setup-go@v7.0.0
-        with:
-          go-version-file: go.mod
-          cache-dependency-path: go.sum
-
-      - name: Install ecCodes
-        run: |
-          sudo apt-get update
-          sudo apt-get install --no-install-recommends --yes libeccodes-dev pkg-config
+      - name: Install Flox
+        uses: flox/install-flox-action@v2
 
       - name: Run golangci-lint
-        uses: golangci/golangci-lint-action@v9.3.0
+        uses: flox/activate-action@v1
         with:
-          version: v2.13.1
+          command: golangci-lint run ./...
 
   tidy:
     name: Go mod tidy
@@ -44,16 +36,15 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v7.0.1
 
-      - name: Set up Go
-        uses: actions/setup-go@v7.0.0
-        with:
-          go-version-file: go.mod
-          cache-dependency-path: go.sum
+      - name: Install Flox
+        uses: flox/install-flox-action@v2
 
       - name: Check module files
-        run: |
-          go mod tidy
-          git diff --exit-code -- go.mod go.sum
+        uses: flox/activate-action@v1
+        with:
+          command: |
+            go mod tidy
+            git diff --exit-code -- go.mod go.sum
 
   test:
     name: Test
@@ -62,19 +53,12 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v7.0.1
 
-      - name: Set up Go
-        uses: actions/setup-go@v7.0.0
-        with:
-          go-version-file: go.mod
-          cache-dependency-path: go.sum
-
-      - name: Install ecCodes
-        run: |
-          sudo apt-get update
-          sudo apt-get install --no-install-recommends --yes libeccodes-dev pkg-config
-
-      - name: Show ecCodes version
-        run: codes_info -v
+      - name: Install Flox
+        uses: flox/install-flox-action@v2
 
       - name: Run tests
-        run: go test -race -count=1 ./...
+        uses: flox/activate-action@v1
+        with:
+          command: |
+            codes_info -v
+            go test -race -count=1 ./...

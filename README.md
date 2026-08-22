@@ -9,7 +9,7 @@ library.
 
 ## Requirements
 
-- Go 1.27 or newer with cgo enabled
+- Go 1.26 or newer with cgo enabled
 - ecCodes 2.48.0 and `pkg-config`
 - A C compiler
 
