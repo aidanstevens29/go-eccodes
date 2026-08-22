@@ -7,29 +7,28 @@ The package currently provides a read-only, streaming API for GRIB1 and GRIB2
 messages. It is modeled on ecCodes 2.48.0 and uses cgo to call the native
 library.
 
-## Requirements
+## Development with Flox
 
-- Go 1.26 or newer with cgo enabled
-- ecCodes 2.48.0 and `pkg-config`
-- A C compiler
-
-On macOS with Homebrew:
+Install [Flox](https://flox.dev/docs/install-flox/install), then activate the
+environment committed to this repository:
 
 ```sh
-brew install eccodes pkg-config
+flox activate
 ```
 
-On Debian or Ubuntu:
+The environment provides the pinned Go toolchain, ecCodes library, C compiler,
+`pkg-config`, and `golangci-lint`. Once activated, run the usual project
+commands directly:
 
 ```sh
-sudo apt-get install libeccodes-dev pkg-config
+go test -race -count=1 ./...
+golangci-lint run ./...
 ```
 
-For Conda installations, activate the environment and expose its pkg-config
-metadata if necessary:
+For a single command without entering an interactive shell, use:
 
 ```sh
-export PKG_CONFIG_PATH="$CONDA_PREFIX/lib/pkgconfig${PKG_CONFIG_PATH:+:$PKG_CONFIG_PATH}"
+flox activate -- go test ./...
 ```
 
 ## Reading a GRIB file
