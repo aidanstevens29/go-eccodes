@@ -43,7 +43,7 @@ import (
 	"io"
 	"log"
 
-	eccodes "go-eccodes"
+	eccodes "github.com/aidanstevens29/go-eccodes"
 )
 
 func main() {
