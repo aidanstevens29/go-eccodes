@@ -1,0 +1,64 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7.0.1
+
+      - name: Install Flox
+        uses: flox/install-flox-action@v2
+
+      - name: Run golangci-lint
+        uses: flox/activate-action@v1
+        with:
+          command: golangci-lint run ./...
+
+  tidy:
+    name: Go mod tidy
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7.0.1
+
+      - name: Install Flox
+        uses: flox/install-flox-action@v2
+
+      - name: Check module files
+        uses: flox/activate-action@v1
+        with:
+          command: |
+            go mod tidy
+            git diff --exit-code -- go.mod go.sum
+
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7.0.1
+
+      - name: Install Flox
+        uses: flox/install-flox-action@v2
+
+      - name: Run tests
+        uses: flox/activate-action@v1
+        with:
+          command: |
+            codes_info -v
+            go test -race -count=1 ./...

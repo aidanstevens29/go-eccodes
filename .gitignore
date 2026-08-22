@@ -1,0 +1,13 @@
+*.grib
+*.grib1
+*.grib2
+*.grb
+*.grb2
+
+!testdata/*.grib
+!testdata/*.grib1
+!testdata/*.grib2
+!testdata/*.grb
+!testdata/*.grb2
+
+.idea
