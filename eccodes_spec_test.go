@@ -54,6 +54,13 @@ var _ = Describe("ecCodes", func() {
 	})
 
 	Describe("opening files", func() {
+		It("rejects paths containing NUL bytes", func() {
+			reader, err := Open("forecast\x00ignored.grib2")
+
+			Expect(err).To(MatchError(ContainSubstring("path contains NUL byte")))
+			Expect(reader).To(BeNil())
+		})
+
 		It("returns an error for a missing file", func() {
 			path := filepath.Join(GinkgoT().TempDir(), "missing.grib2")
 

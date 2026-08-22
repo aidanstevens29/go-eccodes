@@ -90,6 +90,10 @@ type Reader struct {
 
 // Open opens path for reading GRIB messages.
 func Open(path string) (*Reader, error) {
+	if strings.IndexByte(path, 0) >= 0 {
+		return nil, fmt.Errorf("eccodes: open %q: path contains NUL byte", path)
+	}
+
 	cpath := C.CString(path)
 	defer C.free(unsafe.Pointer(cpath))
 
