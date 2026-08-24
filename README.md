@@ -92,9 +92,28 @@ Metadata and decoded data are available through typed key accessors:
 - `String`
 - `Size`
 
-`Doubles("values")` returns the decoded grid-point values. `Bytes` returns an
-independent copy of the encoded GRIB message, and `NewMessage` parses a complete
-encoded message already held in memory.
+`Doubles("values")` returns the decoded key array in the message's native scan
+order. Do not assume that independently fetched `latitudes`, `longitudes`, and
+`values` arrays are index-aligned for every valid GRIB scanning mode.
+
+Use `GeographicData` when coordinates and values must describe the same
+points. It delegates to ecCodes' geographic iterator and returns three aligned
+slices while honoring scanning modes such as alternating rows and column-major
+scans. Once geometry has been obtained from one message, `GeographicValues`
+returns only values in that same geographic ordering without allocating unused
+coordinate slices:
+
+```go
+grid, err := message.GeographicData()
+if err != nil {
+	log.Fatal(err)
+}
+fmt.Printf("first point: %.4f, %.4f = %g\n",
+	grid.Latitudes[0], grid.Longitudes[0], grid.Values[0])
+```
+
+`Bytes` returns an independent copy of the encoded GRIB message, and
+`NewMessage` parses a complete encoded message already held in memory.
 
 `RuntimeVersion` reports the linked native ecCodes version. `TargetVersion`
 reports the upstream version targeted by these bindings.
