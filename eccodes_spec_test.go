@@ -80,6 +80,20 @@ var _ = Describe("ecCodes", func() {
 		})
 	})
 
+	Describe("closed messages", func() {
+		It("rejects geographic data operations", func() {
+			message := &Message{closed: true}
+
+			data, err := message.GeographicData()
+			Expect(data).To(Equal(GeographicData{}))
+			Expect(err).To(MatchError(ErrClosed))
+
+			values, err := message.GeographicValues()
+			Expect(values).To(BeNil())
+			Expect(err).To(MatchError(ErrClosed))
+		})
+	})
+
 	Describe("reader lifecycle", func() {
 		It("allows repeated closes and rejects subsequent reads", func() {
 			reader := &Reader{closed: true}
@@ -143,6 +157,24 @@ var _ = Describe("ecCodes", func() {
 			expectDouble(message, "min", expected.Minimum)
 			expectDouble(message, "max", expected.Maximum)
 			expectDouble(message, "average", expected.Average)
+
+			gridData, err := message.GeographicData()
+			Expect(err).NotTo(HaveOccurred())
+			Expect(gridData.Latitudes).To(HaveLen(int(expected.NumberOfPoints)))
+			Expect(gridData.Longitudes).To(HaveLen(int(expected.NumberOfPoints)))
+			Expect(gridData.Values).To(HaveLen(int(expected.NumberOfPoints)))
+			geographicValues, err := message.GeographicValues()
+			Expect(err).NotTo(HaveOccurred())
+			Expect(geographicValues).To(Equal(gridData.Values))
+
+			// NBM uses alternating-row scanning. The geographic iterator keeps
+			// Edmonton's coordinate and value aligned, whereas the independently
+			// decoded values key retains the native reversed order on this odd row.
+			const edmonton = 1451*2345 + 734
+			Expect(gridData.Latitudes[edmonton]).To(BeNumerically("~", 53.545, 0.001))
+			Expect(normalizeLongitude(gridData.Longitudes[edmonton])).To(BeNumerically("~", -113.509, 0.001))
+			Expect(gridData.Values[edmonton]).To(BeNumerically("~", 299.1, 1e-9))
+			Expect(values[edmonton]).To(BeNumerically("~", 289.4, 1e-9))
 
 			encoded, err := message.Bytes()
 			Expect(err).NotTo(HaveOccurred())
@@ -208,4 +240,11 @@ func statistics(values []float64) (minimum, maximum, average float64) {
 		sum += value
 	}
 	return minimum, maximum, sum / float64(len(values))
+}
+
+func normalizeLongitude(value float64) float64 {
+	if value > 180 {
+		return value - 360
+	}
+	return value
 }

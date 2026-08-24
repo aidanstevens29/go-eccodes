@@ -19,6 +19,35 @@ static FILE* go_eccodes_fopen(const char* path, int* err) {
 	}
 	return file;
 }
+
+// ecCodes' geographic iterator keeps coordinates and values aligned while
+// applying the message's scanning-mode semantics. Keep this loop in C so a
+// large field does not require one cgo transition per grid point.
+static int go_eccodes_grib_get_values(const codes_handle* handle, double* values, size_t expected) {
+	int err = CODES_SUCCESS;
+	codes_iterator* iterator = codes_grib_iterator_new(handle, 0, &err);
+	if (iterator == NULL) {
+		return err == CODES_SUCCESS ? CODES_INTERNAL_ERROR : err;
+	}
+
+	size_t count = 0;
+	double latitude = 0;
+	double longitude = 0;
+	double value = 0;
+	while (codes_grib_iterator_next(iterator, &latitude, &longitude, &value)) {
+		if (count >= expected) {
+			codes_grib_iterator_delete(iterator);
+			return CODES_ARRAY_TOO_SMALL;
+		}
+		values[count++] = value;
+	}
+
+	err = codes_grib_iterator_delete(iterator);
+	if (err != CODES_SUCCESS) {
+		return err;
+	}
+	return count == expected ? CODES_SUCCESS : CODES_COUNT_MISMATCH;
+}
 */
 import "C"
 
@@ -153,6 +182,19 @@ type Message struct {
 	closed bool
 }
 
+// GeographicData contains geographic coordinates and decoded values in one aligned
+// ordering. At every index, Latitudes[i], Longitudes[i], and Values[i]
+// describe the same grid point. ecCodes' geographic iterator applies GRIB
+// scanning-mode semantics, including alternating-row and column-major scans.
+//
+// GeographicData does not assume a rectangular grid. Callers that need dimensions
+// can inspect the appropriate ecCodes keys for the message's grid type.
+type GeographicData struct {
+	Latitudes  []float64
+	Longitudes []float64
+	Values     []float64
+}
+
 func newMessage(handle *C.codes_handle) *Message {
 	message := &Message{handle: handle}
 	runtime.SetFinalizer(message, (*Message).finalize)
@@ -273,6 +315,84 @@ func (m *Message) Doubles(key string) ([]float64, error) {
 		return codeError(C.codes_get_double_array(handle, ckey, (*C.double)(unsafe.Pointer(&values[0])), &size), "get doubles", key)
 	})
 	return values, err
+}
+
+// GeographicData returns all coordinates and values through ecCodes'
+// geographic iterator. Unlike independently reading the "latitudes",
+// "longitudes", and "values" keys, the three returned slices are guaranteed
+// to be index-aligned for messages whose native scanning order needs
+// normalization.
+func (m *Message) GeographicData() (GeographicData, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	if m.closed {
+		return GeographicData{}, ErrClosed
+	}
+	count, err := gridPointCount(m.handle)
+	if err != nil {
+		return GeographicData{}, err
+	}
+	data := GeographicData{
+		Latitudes:  make([]float64, count),
+		Longitudes: make([]float64, count),
+		Values:     make([]float64, count),
+	}
+	if count == 0 {
+		return data, nil
+	}
+	code := C.codes_grib_get_data(
+		m.handle,
+		(*C.double)(unsafe.Pointer(&data.Latitudes[0])),
+		(*C.double)(unsafe.Pointer(&data.Longitudes[0])),
+		(*C.double)(unsafe.Pointer(&data.Values[0])),
+	)
+	runtime.KeepAlive(data)
+	if err := codeError(code, "get geographic grid data", ""); err != nil {
+		return GeographicData{}, err
+	}
+	return data, nil
+}
+
+// GeographicValues returns decoded values in the same scanning-mode-aware
+// ordering used by GeographicData. It avoids allocating coordinate slices
+// when a caller has already obtained the grid geometry from another message.
+func (m *Message) GeographicValues() ([]float64, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	if m.closed {
+		return nil, ErrClosed
+	}
+	count, err := gridPointCount(m.handle)
+	if err != nil {
+		return nil, err
+	}
+	values := make([]float64, count)
+	if count == 0 {
+		return values, nil
+	}
+	code := C.go_eccodes_grib_get_values(
+		m.handle,
+		(*C.double)(unsafe.Pointer(&values[0])),
+		C.size_t(count),
+	)
+	runtime.KeepAlive(values)
+	if err := codeError(code, "get geographic values", ""); err != nil {
+		return nil, err
+	}
+	return values, nil
+}
+
+func gridPointCount(handle *C.codes_handle) (int, error) {
+	key := C.CString("numberOfPoints")
+	defer C.free(unsafe.Pointer(key))
+	var count C.long
+	if err := codeError(C.codes_get_long(handle, key, &count), "get long", "numberOfPoints"); err != nil {
+		return 0, err
+	}
+	if count < 0 || uint64(count) > uint64(maxInt()) {
+		return 0, errors.New("eccodes: grid point count is outside the supported range")
+	}
+	return int(count), nil
 }
 
 // Longs returns all signed integer values stored under key.
